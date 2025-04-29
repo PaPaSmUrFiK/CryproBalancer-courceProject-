@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+
+<AnchorPane prefHeight="400.0" prefWidth="473.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="AddUpdateFlight">
+   <children>
+      <DatePicker fx:id="dpDeparture" layoutX="25.0" layoutY="47.0" />
+      <Label layoutX="25.0" layoutY="30.0" text="Время отправления" />
+      <Label layoutX="25.0" layoutY="82.0" text="Статус" />
+      <TextField fx:id="txtfldStatus" layoutX="25.0" layoutY="99.0" />
+      <Label layoutX="25.0" layoutY="173.0" text="Место назначения:" />
+      <TextField fx:id="txtfldArrival" layoutX="25.0" layoutY="190.0" />
+      <TextField fx:id="txtfldDeparture" layoutX="25.0" layoutY="244.0" />
+      <Label layoutX="25.0" layoutY="227.0" text="Место отправки:" />
+      <Label layoutX="25.0" layoutY="279.0" text="Время в пути:" />
+      <TextField fx:id="txtfldFlightTime" layoutX="25.0" layoutY="296.0" />
+      <Label layoutX="25.0" layoutY="333.0" text="Дистанция:" />
+      <TextField fx:id="txtfldDistance" layoutX="25.0" layoutY="350.0" />
+      <Label layoutX="307.0" layoutY="30.0" text="Название" />
+      <Label layoutX="84.0" layoutY="6.0" text="Рейс" />
+      <Label layoutX="74.0" layoutY="144.0" text="Маршрут" />
+      <Label layoutX="358.0" layoutY="6.0" text="Самолёт" />
+      <TextField fx:id="txtfldName" layoutX="307.0" layoutY="47.0" />
+      <Label layoutX="307.0" layoutY="82.0" text="Тип:" />
+      <TextField fx:id="txtfldType" layoutX="307.0" layoutY="99.0" />
+      <Label layoutX="307.0" layoutY="144.0" text="Кол-во сидений:" />
+      <Label layoutX="307.0" layoutY="194.0" text="Кол-во бизнес мест:" />
+      <TextField fx:id="txtfldPlace" layoutX="307.0" layoutY="161.0" />
+      <TextField fx:id="txtfldBusPlace" layoutX="307.0" layoutY="215.0" />
+      <Button layoutX="382.0" layoutY="363.0" mnemonicParsing="false" onAction="#OnSave" text="Сохранить" />
+      <Button layoutX="321.0" layoutY="363.0" mnemonicParsing="false" onAction="#OnBack" text="Назад" />
+   </children>
+</AnchorPane>

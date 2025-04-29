@@ -1,0 +1,27 @@
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <!-- PostgreSQL 17.4 -->
+        <property name="connection.driver_class">org.postgresql.Driver</property>
+        <property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/postgres</property>
+        <property name="hibernate.connection.username">postgres</property>
+        <property name="hibernate.connection.password">1111</property>
+
+        <!-- Schema update -->
+        <property name="hibernate.hbm2ddl.auto">update</property>
+
+        <property name="show_sql">false</property>
+        <!-- Logging -->
+        <property name="hibernate.show_sql">true</property>
+        <property name="hibernate.format_sql">true</property>
+        <mapping class="cryptoBalancer.Models.Entities.User"/>
+        <mapping class="cryptoBalancer.Models.Entities.Role"/>
+        <mapping class="cryptoBalancer.Models.Entities.Analytic"/>
+        <mapping class="cryptoBalancer.Models.Entities.Crypto"/>
+        <mapping class="cryptoBalancer.Models.Entities.CryptoHistory"/>
+        <mapping class="cryptoBalancer.Models.Entities.Investment"/>
+        <mapping class="cryptoBalancer.Models.Entities.Portfolio"/>
+    </session-factory>
+</hibernate-configuration>

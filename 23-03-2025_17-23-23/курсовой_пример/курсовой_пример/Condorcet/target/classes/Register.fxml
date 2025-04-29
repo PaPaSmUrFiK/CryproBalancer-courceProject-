@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<?import javafx.scene.text.Font?>
+<AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="327.0" prefWidth="381.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Register">
+    <children>
+        <PasswordField fx:id="passwordfieldPassword" layoutX="30.0" layoutY="124.0" />
+        <PasswordField fx:id="passwordfieldConfirmPassword" layoutX="30.0" layoutY="176.0" />
+        <Label layoutX="33.0" layoutY="107.0" text="Пароль:" />
+        <Label layoutX="30.0" layoutY="159.0" text="Подтверждение пароля:" />
+        <Button fx:id="buttonSignUp" layoutX="279.0" layoutY="284.0" mnemonicParsing="false" onAction="#Signup_Pressed" prefHeight="25.0" prefWidth="89.0" text="Регистрация" />
+        <Button fx:id="buttonBack" layoutX="216.0" layoutY="284.0" mnemonicParsing="false" onAction="#Back_Pressed" text="Назад" />
+        <Label layoutX="36.0" layoutY="53.0" text="Логин:" />
+        <TextField fx:id="textfieldLogin" layoutX="30.0" layoutY="70.0" />
+        <Label fx:id="labelMessage" alignment="CENTER" contentDisplay="CENTER" layoutX="30.0" layoutY="296.0" text="error" textFill="RED" visible="false" />
+        <Label layoutX="19.0" layoutY="14.0" text="Регистрация">
+            <font>
+                <Font size="30.0" />
+            </font>
+        </Label>
+      <Label layoutX="217.0" layoutY="53.0" text="Почта:" />
+      <TextField fx:id="textfieldEmail" layoutX="217.0" layoutY="70.0" />
+      <Spinner fx:id="spinnerAge" layoutX="217.0" layoutY="124.0" prefHeight="25.0" prefWidth="89.0" />
+      <Label layoutX="223.0" layoutY="107.0" text="Возраст:" />
+      <Label layoutX="221.0" layoutY="159.0" text="Пол:" />
+      <RadioButton fx:id="cbMale" layoutX="218.0" layoutY="180.0" mnemonicParsing="false" text="M">
+         <toggleGroup>
+            <ToggleGroup fx:id="Sex" />
+         </toggleGroup>
+      </RadioButton>
+      <RadioButton fx:id="cbFemale" layoutX="267.0" layoutY="180.0" mnemonicParsing="false" text="Ж" toggleGroup="$Sex" />
+      <Label layoutX="220.0" layoutY="217.0" text="Адрес:" />
+      <TextField fx:id="textfieldAddress" layoutX="217.0" layoutY="234.0" />
+    </children>
+</AnchorPane>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<?import javafx.scene.chart.BarChart?>
+<AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="460.0" prefWidth="540.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Diagram">
+   <children>
+      <Button fx:id="buttonBack" layoutX="50.0" layoutY="414.0" mnemonicParsing="false" onAction="#Back_Pressed" text="Назад" />
+      <BarChart fx:id="Chart" layoutX="14.0" layoutY="14.0">
+        <xAxis>
+          <CategoryAxis fx:id="categoryAxis" animated="false" side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+          <NumberAxis fx:id="numberAxis" side="LEFT" />
+        </yAxis>
+      </BarChart>
+   </children>
+</AnchorPane>

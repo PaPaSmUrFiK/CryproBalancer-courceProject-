@@ -1,5 +1,6 @@
 package cryptoBalancer.Models.Entities;
 
+import com.google.gson.annotations.Expose;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -36,17 +37,21 @@ import java.math.BigDecimal;
 public class Analytic {
     @Id
     @Column(name = "portfolio_id")
+    @Expose
     private int portfolioId;
 
     @OneToOne
     @MapsId
     @JoinColumn(name = "portfolio_id")
+    @Expose
     private Portfolio portfolio;
 
     @Column(name = "expected_return", nullable = false, precision = 10, scale = 6)
+    @Expose
     private BigDecimal expectedReturn;
 
     @Column(name = "risk", nullable = false, precision = 10, scale = 6)
+    @Expose
     private BigDecimal risk;
 
     public Analytic() {

@@ -1,61 +1,66 @@
-SET search_path TO crypto;
-
--- 1. userrole
-CREATE TABLE userrole (
+-- Таблица userrole (Role)
+CREATE TABLE crypto_balancer.userrole (
     role_id SERIAL PRIMARY KEY,
-    role_name VARCHAR(255) NOT NULL
+    role_name VARCHAR(50) NOT NULL
 );
 
--- 2. appuser
-CREATE TABLE appuser (
+-- Таблица appuser (User)
+CREATE TABLE crypto_balancer.appuser (
     user_id SERIAL PRIMARY KEY,
     role_id INT NOT NULL,
-    username VARCHAR(255) NOT NULL UNIQUE,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    CONSTRAINT fk_appuser_role FOREIGN KEY (role_id) REFERENCES userrole(role_id) ON DELETE CASCADE
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(60) NOT NULL, -- Увеличено до 60 для поддержки BCrypt
+    FOREIGN KEY (role_id) REFERENCES crypto_balancer.userrole(role_id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
--- 3. portfolio
-CREATE TABLE portfolio (
+-- Таблица portfolio (Portfolio)
+CREATE TABLE crypto_balancer.portfolio (
     portfolio_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
-    portfolio_name VARCHAR(255) NOT NULL,
+    portfolio_name VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_portfolio_user FOREIGN KEY (user_id) REFERENCES appuser(user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES crypto_balancer.appuser(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- 4. analytic
-CREATE TABLE analytic (
+-- Таблица analytic (Analytic)
+CREATE TABLE crypto_balancer.analytic (
     portfolio_id INT PRIMARY KEY,
-    expected_return NUMERIC(10,6) NOT NULL,
-    risk NUMERIC(10,6) NOT NULL,
-    CONSTRAINT fk_analytic_portfolio FOREIGN KEY (portfolio_id) REFERENCES portfolio(portfolio_id) ON DELETE CASCADE
+    risk NUMERIC(10, 6) NOT NULL,
+    expected_return NUMERIC(10, 6) NOT NULL,
+    FOREIGN KEY (portfolio_id) REFERENCES crypto_balancer.portfolio(portfolio_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- 5. crypto
-CREATE TABLE crypto (
+-- Таблица crypto (Crypto)
+CREATE TABLE crypto_balancer.crypto (
     crypto_id SERIAL PRIMARY KEY,
-    crypto_name VARCHAR(255) NOT NULL,
-    symbol VARCHAR(50) NOT NULL UNIQUE
+    name VARCHAR(50) NOT NULL,
+    symbol VARCHAR(10) NOT NULL UNIQUE
 );
 
--- 6. investment
-CREATE TABLE investment (
-    investment_id SERIAL PRIMARY KEY,
-    portfolio_id INT NOT NULL,
-    crypto_id INT NOT NULL,
-    amount NUMERIC(20,8) NOT NULL,
-    purchase_price NUMERIC(20,8) NOT NULL,
-    CONSTRAINT fk_investment_portfolio FOREIGN KEY (portfolio_id) REFERENCES portfolio(portfolio_id) ON DELETE CASCADE,
-    CONSTRAINT fk_investment_crypto FOREIGN KEY (crypto_id) REFERENCES crypto(crypto_id) ON DELETE CASCADE
-);
-
--- 7. cryptohistory
-CREATE TABLE cryptohistory (
+-- Таблица cryptohistory (CryptoHistory)
+CREATE TABLE crypto_balancer.cryptohistory (
     history_id SERIAL PRIMARY KEY,
     crypto_id INT NOT NULL,
     date_changed DATE NOT NULL,
-    price NUMERIC(20,8) NOT NULL,
-    CONSTRAINT fk_cryptohistory_crypto FOREIGN KEY (crypto_id) REFERENCES crypto(crypto_id) ON DELETE CASCADE
+    price NUMERIC(20, 8) NOT NULL,
+    FOREIGN KEY (crypto_id) REFERENCES crypto_balancer.crypto(crypto_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+-- Таблица investment (Investment)
+CREATE TABLE crypto_balancer.investment (
+    investment_id SERIAL PRIMARY KEY,
+    portfolio_id INT NOT NULL,
+    crypto_id INT NOT NULL,
+    purchase_price NUMERIC(20, 8) NOT NULL,
+    amount NUMERIC(20, 8) NOT NULL,
+    FOREIGN KEY (portfolio_id) REFERENCES crypto_balancer.portfolio(portfolio_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (crypto_id) REFERENCES crypto_balancer.crypto(crypto_id) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- Индексы для оптимизации запросов
+CREATE INDEX idx_appuser_role_id ON crypto_balancer.appuser(role_id);
+CREATE INDEX idx_portfolio_user_id ON crypto_balancer.portfolio(user_id);
+CREATE INDEX idx_cryptohistory_crypto_id ON crypto_balancer.cryptohistory(crypto_id);
+CREATE INDEX idx_investment_portfolio_id ON crypto_balancer.investment(portfolio_id);
+CREATE INDEX idx_investment_crypto_id ON crypto_balancer.investment(crypto_id);

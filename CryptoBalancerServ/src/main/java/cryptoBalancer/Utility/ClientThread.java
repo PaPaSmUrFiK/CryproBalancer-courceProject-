@@ -103,18 +103,15 @@ public class ClientThread implements Runnable {
                 }
             }
             case LOGIN: {
-                for(User user: userService.findAllEntities()){
-                    System.out.println(user.getUserId());
-                    System.out.println(user.getRole().getRoleName());
-                    System.out.println(user.getEmail());
-                    System.out.println(user.getPasswordHash());
-                }
                 User requestUser = gson.fromJson(request.getRequestMessage(), User.class);
                 System.out.println("Попытка входа пользователя: " + requestUser.getUsername());
 
                 List<User> users = userService.findAllEntities();
                 boolean validUser = users.stream()
-                        .anyMatch(u -> u.getUsername().equals(requestUser.getUsername()) && u.getPasswordHash().equals(requestUser.getPasswordHash()));
+                        .anyMatch(u ->
+                                u.getUsername().equals(requestUser.getUsername()) &&
+                                        PasswordUtils.checkPassword(requestUser.getPasswordHash(), u.getPasswordHash())
+                        );
 
                 if (validUser) {
                     User user = users.stream()

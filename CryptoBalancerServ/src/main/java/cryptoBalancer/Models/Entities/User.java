@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "appuser", schema = "crypto")
+@Table(name = "appuser", schema = "crypto_balancer")
 public class User{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

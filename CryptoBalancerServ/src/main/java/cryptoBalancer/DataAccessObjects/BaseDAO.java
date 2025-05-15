@@ -11,6 +11,7 @@ public abstract class BaseDAO<T> implements DAO<T> {
     protected void executeInTransaction(Consumer<Session> operation) {
         Transaction transaction = null;
         try (Session session = HibernateSessionFactory.getSessionFactory().openSession()) {
+
             transaction = session.beginTransaction();
             operation.accept(session);
             transaction.commit();

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "crypto", schema = "crypto")
+@Table(name = "crypto", schema = "crypto_balancer")
 public class Crypto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

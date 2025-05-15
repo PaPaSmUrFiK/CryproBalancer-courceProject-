@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
-@Table(name = "portfolio", schema = "crypto")
+@Table(name = "portfolio", schema = "crypto_balancer")
 public class Portfolio{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

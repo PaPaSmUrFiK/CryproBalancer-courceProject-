@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "cryptohistory", schema = "crypto")
+@Table(name = "cryptohistory", schema = "crypto_balancer")
 public class CryptoHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -33,7 +33,7 @@ import java.math.BigDecimal;
 //}
 
 @Entity
-@Table(name = "analytic")
+@Table(name = "analytic", schema = "crypto_balancer")
 public class Analytic {
     @Id
     @Column(name = "portfolio_id")

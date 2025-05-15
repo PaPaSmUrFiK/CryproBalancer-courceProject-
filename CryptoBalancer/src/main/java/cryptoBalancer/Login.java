@@ -9,6 +9,7 @@ import java.util.ResourceBundle;
 import com.google.gson.GsonBuilder;
 import cryptoBalancer.Adapters.LocalDateAdapter;
 import cryptoBalancer.Adapters.LocalDateTimeAdapter;
+import cryptoBalancer.Utility.AlertUtil;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -61,9 +62,20 @@ public class Login {
         String answer = ClientSocket.getInstance().getInStream().readLine();
         Response response = new Gson().fromJson(answer, Response.class);
         if(response.getResponseStatus() == ResponseStatus.OK){
-            System.out.println("Вход выполнен");
+            loginButton.getScene().getWindow().hide();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/cryptoBalancer/MainLayout.fxml"));
+            try{
+                loader.load();
+            }catch (Exception e){
+                e.printStackTrace();
+                AlertUtil.showError("Ошибка", "Не удалось загрузить интерфейс приложения", e.getMessage());
+            }
+            Parent root = loader.getRoot();
+            Stage stage = new Stage();
+            stage.setScene(new Scene(root));
+            stage.show();
         }else{
-            System.out.println("Неверные данные");
+            AlertUtil.showError("Ошибка загрузки", "Не удалось войти в систему", response.getResponseMessage());
         }
     }
 
@@ -75,11 +87,7 @@ public class Login {
             loader.load();
         }catch (IOException e){
             e.printStackTrace();
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Ошибка");
-            alert.setHeaderText("Не удалось загрузить форму регистрации");
-            alert.setContentText(e.getMessage());
-            alert.showAndWait();
+            AlertUtil.showError("Ошибка загрузки", "Не удалось загрузить форму регистрации", e.getMessage());
         }
 
         Parent root = loader.getRoot();

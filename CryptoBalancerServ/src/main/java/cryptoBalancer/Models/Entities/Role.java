@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "userrole", schema = "crypto")
+@Table(name = "userrole", schema = "crypto_balancer")
 public class Role{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

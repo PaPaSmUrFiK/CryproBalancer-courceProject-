@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="600.0" prefWidth="800.0" style="-fx-background-color: #C7AA8B;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cryptoBalancer.MainLayout">
+   <children>
+
+      <!-- Боковая панель (VBox) -->
+      <VBox prefHeight="600.0" prefWidth="150.0" style="-fx-background-color: #323232;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <ImageView fitHeight="100.0" fitWidth="150.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../images/fun-bird-3d-illustration-Photoroom.png" />
+               </image>
+            </ImageView>
+            <Button mnemonicParsing="false" onAction="#switchToNews" prefHeight="40.0" prefWidth="150.0" text="Новости">
+               <cursor>
+                  <Cursor fx:constant="HAND" />
+               </cursor>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets></Button>
+            <Button mnemonicParsing="false" onAction="#switchToPersonal" prefHeight="40.0" prefWidth="150.0" text="Личный кабинет" />
+            <Button mnemonicParsing="false" onAction="#switchToPortfolio" prefHeight="40.0" prefWidth="150.0" text="Управление портфелем" />
+            <Button mnemonicParsing="false" onAction="#switchToCryptoData" prefHeight="40.0" prefWidth="150.0" text="Данные криптовалюты" />
+            <Button mnemonicParsing="false" onAction="#switchToAnalysis" prefHeight="40.0" prefWidth="150.0" text="Анализ и оптимизация" />
+            <Button mnemonicParsing="false" onAction="#switchToReports" prefHeight="40.0" prefWidth="150.0" text="Отчеты" />
+            <Button mnemonicParsing="false" onAction="#switchToAdmin" prefHeight="40.0" prefWidth="150.0" text="Техническое управление" visible="false" />
+         </children>
+      </VBox>
+
+      <!-- Заголовок/подсказка в верхней части -->
+      <Label fx:id="headerLabel" style="-fx-font-size: 18px; -fx-text-fill: #2C3E50; -fx-font-weight: bold;" text="ДОБРО ПОЖАЛОВАТЬ, USERNAME">
+         <AnchorPane.leftAnchor>160.0</AnchorPane.leftAnchor>
+         <AnchorPane.rightAnchor>0.0</AnchorPane.rightAnchor>
+         <AnchorPane.topAnchor>10.0</AnchorPane.topAnchor>
+         <AnchorPane.bottomAnchor>540.0</AnchorPane.bottomAnchor>
+         <font>
+            <Font name="Britannic Bold" size="12.0" />
+         </font>
+      </Label>
+
+      <!-- Центральная область (AnchorPane) для динамического контента -->
+      <AnchorPane fx:id="centerContent" prefHeight="541.0" prefWidth="650.0" style="-fx-background-color: #ECF0F1;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="150.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="59.0">
+         <children>
+            <ListView fx:id="newsList" style="-fx-font-size: 14px;">
+               <AnchorPane.leftAnchor>20.0</AnchorPane.leftAnchor>
+               <AnchorPane.topAnchor>20.0</AnchorPane.topAnchor>
+               <AnchorPane.rightAnchor>20.0</AnchorPane.rightAnchor>
+               <AnchorPane.bottomAnchor>20.0</AnchorPane.bottomAnchor>
+            </ListView>
+         </children>
+      </AnchorPane>
+   </children>
+</AnchorPane>

@@ -18,7 +18,6 @@ public class CryptoHistory {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "crypto_id", nullable = false)
-    @Expose
     private Crypto crypto;
 
     @Column(name = "date_changed", nullable = false)

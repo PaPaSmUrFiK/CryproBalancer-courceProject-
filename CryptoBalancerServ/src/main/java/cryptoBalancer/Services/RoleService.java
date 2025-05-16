@@ -1,5 +1,6 @@
 package cryptoBalancer.Services;
 
+import cryptoBalancer.DataAccessObjects.CryptoDAO;
 import cryptoBalancer.DataAccessObjects.RoleDAO;
 import cryptoBalancer.Interfaces.DAO;
 import cryptoBalancer.Interfaces.Service;
@@ -29,6 +30,10 @@ public class RoleService implements Service<Role> {
     @Override
     public void updateEntity(Role entity) {
         daoService.update(entity);
+    }
+
+    public Role findByName(String roleName){
+        return ((RoleDAO)daoService).findByName(roleName);
     }
 
     public List<Role> findAllEntities() {

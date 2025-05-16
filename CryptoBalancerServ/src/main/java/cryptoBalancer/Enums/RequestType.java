@@ -2,5 +2,15 @@ package cryptoBalancer.Enums;
 
 public enum RequestType {
     REGISTER,
-    LOGIN
+    LOGIN,
+    GET_CRYPTO_LIST,
+    GET_CRYPTO_DATA,
+    CHANGE_PASSWORD,
+    GET_PORTFOLIO_LIST,
+    SAVE_PORTFOLIO,
+    DELETE_PORTFOLIO,
+    GET_PORTFOLIO_DATA,
+    GET_ALL_CRYPTO,
+    GET_ALL_USERS,
+    GET_CRYPTO_NEWS
 }

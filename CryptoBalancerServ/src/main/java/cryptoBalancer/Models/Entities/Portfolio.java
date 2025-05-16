@@ -33,6 +33,7 @@ public class Portfolio{
     private User user;
 
     @OneToMany(mappedBy = "portfolio", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Expose
     private Set<Investment> investments = new LinkedHashSet<>();
 
     public Portfolio() {

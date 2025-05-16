@@ -20,7 +20,6 @@ public class ClientSocket {
         }
     }
 
-    private int FlightId = -1;
 
     public static ClientSocket getInstance() {
         return SINGLE_INSTANCE;
@@ -48,14 +47,6 @@ public class ClientSocket {
         this.user = user;
     }
 
-
-    public int getFlightId() {
-        return FlightId;
-    }
-
-    public void setFlightId(int flightId) {
-        FlightId = flightId;
-    }
     public PrintWriter getOut() {
         return out;
     }

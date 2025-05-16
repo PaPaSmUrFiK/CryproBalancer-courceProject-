@@ -35,4 +35,12 @@ public class InvestmentDAO extends BaseDAO<Investment> {
             return session.createQuery("FROM Investment ", Investment.class).getResultList();
         }
     }
+
+    public void deleteInvestmentsByPortfolioId(int portfolioId){
+        executeInTransaction(session->{
+            session.createQuery("DELETE FROM Investment WHERE portfolio.id = :portfolioId")
+                    .setParameter("portfolioId", portfolioId)
+                    .executeUpdate();
+        });
+    }
 }

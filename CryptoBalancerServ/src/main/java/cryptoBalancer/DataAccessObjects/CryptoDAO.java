@@ -36,4 +36,15 @@ public class CryptoDAO extends BaseDAO<Crypto> {
         }
     }
 
+    public Crypto findCryptoByName(String cryptoName) {
+        try (Session session = HibernateSessionFactory.getSessionFactory().openSession()) {
+            return session.createQuery("FROM Crypto WHERE name = :cryptoName", Crypto.class)
+                    .setParameter("cryptoName", cryptoName)
+                    .uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }

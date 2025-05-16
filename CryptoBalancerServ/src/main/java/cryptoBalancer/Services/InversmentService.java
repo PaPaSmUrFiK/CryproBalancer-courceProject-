@@ -33,4 +33,8 @@ public class InversmentService implements Service<Investment> {
     public List<Investment> findAllEntities() {
         return daoService.findAll();
     }
+
+    public void deleteInvestmentsByPortfolioId(int portfolioId){
+        ((InversmentService)daoService).deleteInvestmentsByPortfolioId(portfolioId);
+    }
 }

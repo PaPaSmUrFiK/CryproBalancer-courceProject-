@@ -17,7 +17,7 @@ public class Crypto {
     @Expose
     private int cryptoId;
 
-    @Column(name = "crypto_name", nullable = false)
+    @Column(name = "name", nullable = false)
     @Expose
     private String name;
 
@@ -25,21 +25,27 @@ public class Crypto {
     @Expose
     private String symbol;
 
+    @Column(name = "coingecko_id", nullable = false, unique = true)
+    @Expose
+    private String coinGeckoId;
+
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "crypto", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Investment> investments = new HashSet<>();
 
-    @OneToMany(mappedBy = "crypto", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "crypto", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Expose
     private List<CryptoHistory> history = new ArrayList<>();
 
     public Crypto() {
     }
 
-    public Crypto(Set<Investment> investments, List<CryptoHistory> history, String symbol, String name, int cryptoId) {
+    public Crypto(Set<Investment> investments, List<CryptoHistory> history, String symbol, String name, int cryptoId, String coinGeckoId) {
         this.investments = investments;
         this.history = history;
         this.symbol = symbol;
         this.name = name;
         this.cryptoId = cryptoId;
+        this.coinGeckoId = coinGeckoId;
     }
 
     public int getCryptoId() {
@@ -80,5 +86,22 @@ public class Crypto {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getCoinGeckoId() {
+        return coinGeckoId;
+    }
+
+    public void setCoinGeckoId(String coinGeckoId) {
+        this.coinGeckoId = coinGeckoId;
+    }
+
+    @Override
+    public String toString() {
+        return "Crypto{" +
+                "coinGeckoId='" + coinGeckoId + '\'' +
+                ", name='" + name + '\'' +
+                ", symbol='" + symbol + '\'' +
+                '}';
     }
 }

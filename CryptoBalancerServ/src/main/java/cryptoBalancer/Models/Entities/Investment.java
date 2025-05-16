@@ -17,7 +17,6 @@ public class Investment {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "portfolio_id", nullable = false)
-    @Expose
     private Portfolio portfolio;
 
     @ManyToOne(fetch = FetchType.EAGER)

@@ -9,6 +9,10 @@ public class Request {
     public Request() {
     }
 
+    public Request(RequestType requestType){
+        this.requestType = requestType;
+    }
+
     public Request(RequestType requestType, String requestMessage) {
         this.requestType = requestType;
         this.requestMessage = requestMessage;

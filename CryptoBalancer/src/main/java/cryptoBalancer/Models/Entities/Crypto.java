@@ -12,6 +12,8 @@ public class Crypto {
 
     private String symbol;
 
+    private String coinGeckoId;
+
     private Set<Investment> investments = new HashSet<>();
 
     private List<CryptoHistory> history = new ArrayList<>();
@@ -65,5 +67,18 @@ public class Crypto {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getCoinGeckoId() {
+        return coinGeckoId;
+    }
+
+    public void setCoinGeckoId(String coinGeckoId) {
+        this.coinGeckoId = coinGeckoId;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

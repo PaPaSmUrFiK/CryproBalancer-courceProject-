@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class Portfolio{
+public class Portfolio {
     private int portfolioId;
 
     private String portfolioName;

@@ -43,7 +43,6 @@ public class Analytic {
     @OneToOne
     @MapsId
     @JoinColumn(name = "portfolio_id")
-    @Expose
     private Portfolio portfolio;
 
     @Column(name = "expected_return", nullable = false, precision = 10, scale = 6)

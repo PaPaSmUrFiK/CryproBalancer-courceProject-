@@ -2,7 +2,7 @@ package cryptoBalancer.Models.Entities;
 
 import java.math.BigDecimal;
 
-public class Investment {
+public class Investment extends Crypto {
     private int investmentId;
 
     private Portfolio portfolio;

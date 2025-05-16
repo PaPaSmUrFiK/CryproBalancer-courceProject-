@@ -11,10 +11,12 @@ module com.bsuir.cryptobalancer {
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
     requires com.google.gson;
+    requires java.desktop;
 
     opens cryptoBalancer to javafx.fxml;
     exports cryptoBalancer;
     exports cryptoBalancer.Enums;
-    opens cryptoBalancer.Models.Entities to com.google.gson;
+    opens cryptoBalancer.Models.Entities to com.google.gson, java.base, javafx.fxml, javafx.base;
     opens cryptoBalancer.Models.TCP to com.google.gson;
+
 }

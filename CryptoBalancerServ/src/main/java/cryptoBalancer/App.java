@@ -1,6 +1,8 @@
 package cryptoBalancer;
 
 import cryptoBalancer.Utility.ClientThread;
+import cryptoBalancer.Utility.CoinGeckoDataHandler;
+import cryptoBalancer.Utility.PasswordUtils;
 
 import java.io.IOException;
 import java.net.ServerSocket;

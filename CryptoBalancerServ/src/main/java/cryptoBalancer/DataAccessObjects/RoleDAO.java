@@ -1,5 +1,6 @@
 package cryptoBalancer.DataAccessObjects;
 
+import cryptoBalancer.Models.Entities.Crypto;
 import cryptoBalancer.Models.Entities.Role;
 import cryptoBalancer.Utility.HibernateSessionFactory;
 import org.hibernate.Session;
@@ -32,6 +33,17 @@ public class RoleDAO extends BaseDAO<Role> {
     public List<Role> findAll(){
         try (Session session = HibernateSessionFactory.getSessionFactory().openSession()) {
             return session.createQuery("FROM Role", Role.class).getResultList();
+        }
+    }
+
+    public Role findByName(String roleName){
+        try (Session session = HibernateSessionFactory.getSessionFactory().openSession()) {
+            return session.createQuery("FROM Role WHERE roleName = :roleName", Role.class)
+                    .setParameter("roleName", roleName)
+                    .uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

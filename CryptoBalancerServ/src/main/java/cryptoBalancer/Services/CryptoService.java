@@ -32,7 +32,12 @@ public class CryptoService implements Service<Crypto> {
         daoService.update(entity);
     }
 
+    @Override
     public List<Crypto> findAllEntities() {
         return daoService.findAll();
+    }
+
+    public Crypto findCryptoByName(String cryptoName){
+        return ((CryptoDAO)daoService).findCryptoByName(cryptoName);
     }
 }

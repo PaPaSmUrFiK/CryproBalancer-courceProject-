@@ -12,6 +12,10 @@ module com.bsuir.cryptobalancer {
     requires com.almasb.fxgl.all;
     requires com.google.gson;
     requires java.desktop;
+    requires org.apache.poi.poi;
+    requires org.apache.poi.ooxml;  // Исправлено имя модуля для ooxml
+    requires org.jfree.jfreechart;  // Основной модуль JFreeChart
+
 
     opens cryptoBalancer to javafx.fxml;
     exports cryptoBalancer;

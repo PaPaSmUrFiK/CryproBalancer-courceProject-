@@ -1,11 +1,14 @@
 package cryptoBalancer.Models.Entities;
 
+import com.google.gson.annotations.Expose;
+
 import java.util.HashSet;
 import java.util.Set;
 
-public class Role extends User {
+public class Role {
+    @Expose
     private int roleId;
-
+    @Expose
     private String roleName;
 
     private Set<User> users = new HashSet<>();

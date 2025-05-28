@@ -13,15 +13,21 @@ import cryptoBalancer.Models.TCP.Request;
 import cryptoBalancer.Models.TCP.Response;
 import cryptoBalancer.Utility.AlertUtil;
 import cryptoBalancer.Utility.ClientSocket;
+import cryptoBalancer.Utility.ReportGenerator;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -147,6 +153,35 @@ public class MainLayout implements Initializable {
     @FXML private Button makeAdminButton;
     @FXML private Button editUserButton;
 
+    // Панель анализа
+    @FXML
+    private AnchorPane analysisPane;
+
+    // Элементы панели анализа
+    @FXML
+    private RadioButton maxReturnRadio;
+    @FXML
+    private RadioButton minRiskRadio;
+    @FXML
+    private Label inputLabel;
+    @FXML
+    private TextField analysisInputField;
+    @FXML
+    private Button calculateButton;
+    @FXML
+    private PieChart cryptoAllocationChart;
+    @FXML
+    private Button backToPortfolioButton;
+    @FXML
+    private Label riskLabel;
+    @FXML
+    private Label returnLabel;
+    @FXML
+    private Button createReport;
+
+    @FXML
+    private ToggleGroup strategyToggleGroup;
+
 
     private User loggedInUser;
     private final Gson gson = new GsonBuilder()
@@ -170,6 +205,141 @@ public class MainLayout implements Initializable {
         switchToNews();
         initializeAdmin();
         newsList.setCellFactory(listView -> new NewsListCell());
+
+        // Отключаем взаимодействие с ListView, если он пуст
+        cryptoListView.mouseTransparentProperty().bind(
+                javafx.beans.binding.Bindings.isEmpty(cryptoListView.getItems())
+        );
+
+        // Перехватываем клики на пустом ListView
+        cryptoListView.setOnMouseClicked(event -> {
+            if (cryptoListView.getItems().isEmpty()) {
+                event.consume(); // Останавливаем обработку события
+            }
+        });
+
+        // Слушатель для сброса выбора при изменении списка
+        cryptoListView.getItems().addListener((ListChangeListener<Crypto>) change -> {
+            while (change.next()) {
+                if (change.getList().isEmpty()) {
+                    cryptoListView.getSelectionModel().clearSelection();
+                }
+            }
+        });
+
+        //Инициализация для анализа портфеля
+        strategyToggleGroup = new ToggleGroup();
+        maxReturnRadio.setToggleGroup(strategyToggleGroup);
+        minRiskRadio.setToggleGroup(strategyToggleGroup);
+        maxReturnRadio.setSelected(true); // По умолчанию выбрана максимизация доходности
+
+        // Слушатель для обновления метки в зависимости от выбранной стратегии
+        strategyToggleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle == maxReturnRadio) {
+                inputLabel.setText("Введите уровень риска (%)");
+            } else if (newToggle == minRiskRadio) {
+                inputLabel.setText("Введите целевую доходность (%)");
+            }
+        });
+
+        // Ограничение ввода только числами
+        analysisInputField.setTextFormatter(new TextFormatter<>(change -> {
+            if (change.getText().matches("\\d*\\.?\\d*")) {
+                return change;
+            }
+            return null;
+        }));
+    }
+
+    @FXML
+    private void analyzePortfolio() {
+        if (currentPortfolio == null || currentPortfolio.getInvestments() == null || currentPortfolio.getInvestments().isEmpty()) {
+            AlertUtil.showError("Ошибка", "Выберите портфель с инвестициями для анализа.", "");
+            return;
+        }
+        if (isPortfolioModified) {
+            AlertUtil.showError("Ошибка", "Сохраните портфель перед анализом.", "");
+            return;
+        }
+        portfolioPane.setVisible(false);
+        analysisPane.setVisible(true);
+    }
+
+    @FXML
+    private void calculateAnalysis() {
+        String inputValue = analysisInputField.getText();
+        if (inputValue.isEmpty()) {
+            AlertUtil.showError("Ошибка", "Введите значение.", "");
+            return;
+        }
+        double value;
+        try {
+            value = Double.parseDouble(inputValue);
+            if (value < 0 || value > 100) {
+                AlertUtil.showError("Ошибка", "Значение должно быть от 0 до 100.", "");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            AlertUtil.showError("Ошибка", "Введите корректное число.", "");
+            return;
+        }
+
+        RadioButton selectedStrategy = (RadioButton) strategyToggleGroup.getSelectedToggle();
+        String strategy = selectedStrategy.getText();
+
+        Analytic analytic = new Analytic();
+        //Выбор кнопки
+        if (strategy.equals("Максимизация доходности при заданном риске")) {
+            analytic.setRisk(BigDecimal.valueOf(value)); // Устанавливаем риск из inputValue
+            analytic.setExpectedReturn(BigDecimal.ZERO); // Доходность игнорируется
+        } else {
+            analytic.setExpectedReturn(BigDecimal.valueOf(value)); // Устанавливаем доходность из inputValue
+            analytic.setRisk(BigDecimal.ZERO); // Риск игнорируется
+        }
+
+        Portfolio portfolio = new Portfolio();
+        portfolio.setPortfolioName(portfolioComboBox.getValue());
+        portfolio.setAnalytic(analytic);
+        portfolio.setUser(loggedInUser);
+
+        // Отправка запроса на сервер
+        try {
+
+            currentPortfolio.setAnalytic(analytic);
+            Request request = new Request(RequestType.ANALYZE_PORTFOLIO, gson.toJson(portfolio));
+            ClientSocket.getInstance().getOut().println(gson.toJson(request));
+            ClientSocket.getInstance().getOut().flush();
+
+            String responseMessage = ClientSocket.getInstance().getInStream().readLine();
+            Response response = gson.fromJson(responseMessage, Response.class);
+
+            if (response.getResponseStatus() == ResponseStatus.OK) {
+                Portfolio optimizedPortfolio = gson.fromJson(response.getResponseData(), Portfolio.class);
+                currentPortfolio = optimizedPortfolio;
+                updatePieChart(currentPortfolio);
+            } else {
+                AlertUtil.showError("Ошибка", "Не удалось выполнить анализ.", response.getResponseMessage());
+            }
+        } catch (IOException e) {
+            AlertUtil.showError("Ошибка", "Ошибка соединения.", e.getMessage());
+        }
+    }
+
+    private void updatePieChart(Portfolio portfolio) {
+        ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
+        for (Investment investment : portfolio.getInvestments()) {
+            String cryptoName = investment.getCrypto().getName();
+            double percentage = investment.getAmount().doubleValue() * 100;
+            pieChartData.add(new PieChart.Data(cryptoName + " (" + String.format("%.1f%%", percentage) + ")", percentage));
+        }
+        cryptoAllocationChart.setData(pieChartData);
+    }
+
+    @FXML
+    private void backToPortfolio() {
+        analysisPane.setVisible(false);
+        portfolioPane.setVisible(true);
+        analysisInputField.clear(); // Очистка поля ввода
     }
 
     private void loadNews(){
@@ -196,11 +366,6 @@ public class MainLayout implements Initializable {
     }
 
     @FXML
-    private void analyzePortfolio(){
-
-    }
-
-    @FXML
     private void deletePortfolio(){
         String selectedPortfolio = portfolioComboBox.getValue();
         if (selectedPortfolio == null) {
@@ -213,7 +378,10 @@ public class MainLayout implements Initializable {
         if (!confirm) return;
 
         try {
-            ClientSocket.getInstance().getOut().println(gson.toJson(new Request(RequestType.DELETE_PORTFOLIO, selectedPortfolio)));
+            Portfolio portfolio = new Portfolio();
+            portfolio.setUser(loggedInUser);
+            portfolio.setPortfolioName(selectedPortfolio);
+            ClientSocket.getInstance().getOut().println(gson.toJson(new Request(RequestType.DELETE_PORTFOLIO, gson.toJson(portfolio))));
             ClientSocket.getInstance().getOut().flush();
 
             String responseJson = ClientSocket.getInstance().getInStream().readLine();
@@ -222,10 +390,17 @@ public class MainLayout implements Initializable {
             if (response.getResponseStatus() == ResponseStatus.OK) {
                 AlertUtil.showInfo("Успех", "Портфель удалён", "");
                 currentPortfolio = null;
-                loadPortfolioList();
+                portfolioNames.remove(selectedPortfolio);
+                portfolioComboBox.setValue(null);
+                portfolioComboBox.setItems(portfolioNames);
+                cryptoListView.getSelectionModel().clearSelection();
                 cryptoListView.setItems(FXCollections.observableArrayList());
+                cryptoPortfolioComboBox.setItems(cryptoNames != null ? cryptoNames : FXCollections.observableArrayList());
                 deletePortfolioButton.setDisable(true);
                 analyzePortfolioButton.setDisable(true);
+                addCryptoButton.setDisable(true);
+                savePortfolioButton.setDisable(true);
+
             } else {
                 AlertUtil.showError("Ошибка", "Не удалось удалить портфель", response.getResponseMessage());
             }
@@ -256,9 +431,7 @@ public class MainLayout implements Initializable {
 
         Crypto newCrypto = new Crypto();
         newCrypto.setName(selectedCryptoName);
-
         Investment investment = new Investment();
-        investment.setPortfolio(currentPortfolio);
         investment.setCrypto(newCrypto);
         investment.setAmount(BigDecimal.ZERO);
         investment.setPurchasePrice(BigDecimal.ZERO);
@@ -271,46 +444,79 @@ public class MainLayout implements Initializable {
         updatePortfolioUI(currentPortfolio);
         isPortfolioModified = true;
         savePortfolioButton.setDisable(false);
-        addCryptoButton.setDisable(true);
+
     }
 
     @FXML
-    private void selectPortfolio(){
+    private void selectPortfolio() {
         String selectedPortfolio = portfolioComboBox.getValue();
+
+        // Если ничего не выбрано, сбрасываем интерфейс
         if (selectedPortfolio == null) {
             deletePortfolioButton.setDisable(true);
             analyzePortfolioButton.setDisable(true);
+            createReport.setDisable(true);
+            addCryptoButton.setDisable(true);
+            savePortfolioButton.setDisable(true);
+            cryptoListView.getItems().clear(); // Очищаем список
+            cryptoListView.setDisable(true);  // Отключаем ListView, если пуст
+            cryptoListView.getSelectionModel().clearSelection();
+            cryptoPortfolioComboBox.setItems(cryptoNames != null ? cryptoNames : FXCollections.observableArrayList());
             return;
         }
 
+        // Проверяем несохранённые изменения
         if (isPortfolioModified) {
             boolean save = AlertUtil.showConfirmation("Сохранить изменения",
                     "У вас есть несохранённые изменения. Сохранить перед переключением?", "");
             if (save) {
                 savePortfolio();
+                if (isPortfolioModified) { // Если сохранение не удалось
+                    return;
+                }
             } else {
-                if (unsavedPortfolioName != null) {
+                // Если не сохраняем и портфель новый, удаляем его из списка
+                if (unsavedPortfolioName != null && selectedPortfolio.equals(unsavedPortfolioName)) {
                     portfolioComboBox.getItems().remove(unsavedPortfolioName);
-                    if (selectedPortfolio.equals(unsavedPortfolioName)) {
-                        portfolioComboBox.setValue(null);
-                        unsavedPortfolioName = null;
-                        isPortfolioModified = false;
-                        savePortfolioButton.setDisable(true);
-                        deletePortfolioButton.setDisable(true);
-                        analyzePortfolioButton.setDisable(true);
-                        return;
-                    }
+                    portfolioComboBox.setValue(null);
                     unsavedPortfolioName = null;
+                    isPortfolioModified = false;
+                    deletePortfolioButton.setDisable(true);
+                    analyzePortfolioButton.setDisable(true);
+                    addCryptoButton.setDisable(true);
+                    savePortfolioButton.setDisable(true);
+                    cryptoListView.getItems().clear(); // Очищаем список
+                    cryptoListView.setDisable(true);  // Отключаем ListView, если пуст
+                    cryptoListView.getSelectionModel().clearSelection();
+                    cryptoPortfolioComboBox.setItems(cryptoNames != null ? cryptoNames : FXCollections.observableArrayList());
+                    return;
                 }
                 isPortfolioModified = false;
-                savePortfolioButton.setDisable(true);
+                unsavedPortfolioName = null;
             }
         }
-        if(isCreatingNewPortfolio){
-            loadPortfolioData(selectedPortfolio);
+
+        // Загружаем данные выбранного портфеля
+        loadPortfolioData(selectedPortfolio);
+        if (currentPortfolio != null) {
+            deletePortfolioButton.setDisable(false);
+            analyzePortfolioButton.setDisable(false);
+            addCryptoButton.setDisable(false);
+            createReport.setDisable(false);
+            savePortfolioButton.setDisable(!isPortfolioModified);
+            updatePortfolioUI(currentPortfolio);
+            cryptoListView.setDisable(false); // Включаем ListView, если есть данные
+        } else {
+            deletePortfolioButton.setDisable(true);
+            analyzePortfolioButton.setDisable(true);
+            addCryptoButton.setDisable(true);
+            savePortfolioButton.setDisable(true);
+            portfolioComboBox.setValue(null);
+            cryptoListView.getItems().clear(); // Очищаем список
+            cryptoListView.setDisable(true);  // Отключаем ListView, если пуст
+            cryptoListView.getSelectionModel().clearSelection();
+            cryptoPortfolioComboBox.setItems(cryptoNames != null ? cryptoNames : FXCollections.observableArrayList());
         }
-        deletePortfolioButton.setDisable(false);
-        analyzePortfolioButton.setDisable(false);
     }
 
     private void loadPortfolioList(){
@@ -339,50 +545,39 @@ public class MainLayout implements Initializable {
 
     @FXML
     private void savePortfolio(){
-        if (isPortfolioModified && unsavedPortfolioName != null) {
-            try {
-                Portfolio newPortfolio = new Portfolio();
-                newPortfolio.setPortfolioName(unsavedPortfolioName);
-                newPortfolio.setUser(loggedInUser);
-                newPortfolio.setCreatedAt(LocalDateTime.now());
+        if (!isPortfolioModified || currentPortfolio == null) {
+            return;
+        }
 
-                ObservableList<Crypto> cryptoItems = cryptoListView.getItems();
-                List<Investment> investments = new ArrayList<>();
-                for (Crypto crypto : cryptoItems) {
-                    Investment investment = new Investment();
-                    investment.setPortfolio(newPortfolio);
-                    investment.setCrypto(crypto);
-                    investment.setPurchasePrice(BigDecimal.ZERO);
-                    investment.setAmount(BigDecimal.ZERO);
-                    investments.add(investment);
-                }
+        try {
+            ClientSocket.getInstance().getOut().println(gson.toJson(new Request(RequestType.SAVE_PORTFOLIO, gson.toJson(currentPortfolio))));
+            ClientSocket.getInstance().getOut().flush();
 
-                ClientSocket.getInstance().getOut().println(gson.toJson(new Request(RequestType.SAVE_PORTFOLIO, gson.toJson(newPortfolio))));
-                ClientSocket.getInstance().getOut().flush();
+            String responseJson = ClientSocket.getInstance().getInStream().readLine();
+            Response response = gson.fromJson(responseJson, Response.class);
 
-                String responseJson = ClientSocket.getInstance().getInStream().readLine();
-                Response response = gson.fromJson(responseJson, Response.class);
-
-                if (response.getResponseStatus() != ResponseStatus.OK) {
-                    AlertUtil.showError("Ошибка", "Не удалось сохранить портфель " + unsavedPortfolioName, response.getResponseMessage());
-                    return;
-                }
-
+            if (response.getResponseStatus() == ResponseStatus.OK) {
                 AlertUtil.showInfo("Успех", "Портфель сохранён", "");
                 isPortfolioModified = false;
                 unsavedPortfolioName = null;
                 savePortfolioButton.setDisable(true);
-                loadPortfolioList();
-            } catch (IOException e) {
-                e.printStackTrace();
-                AlertUtil.showError("Ошибка", "Не удалось сохранить портфель " + unsavedPortfolioName, e.getMessage());
+                createReport.setDisable(false);
+                loadPortfolioList(); // Обновляем список портфелей с сервера
+            } else {
+                AlertUtil.showError("Ошибка", "Не удалось сохранить портфель", response.getResponseMessage());
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+            AlertUtil.showError("Ошибка", "Не удалось сохранить портфель", e.getMessage());
         }
     }
 
     private void loadPortfolioData(String portfolioName){
         try {
-            ClientSocket.getInstance().getOut().println(gson.toJson(new Request(RequestType.GET_PORTFOLIO_DATA, gson.toJson(portfolioName))));
+            Portfolio portfolio = new Portfolio();
+            portfolio.setUser(loggedInUser);
+            portfolio.setPortfolioName(portfolioName);
+            ClientSocket.getInstance().getOut().println(gson.toJson(new Request(RequestType.GET_PORTFOLIO_DATA, gson.toJson(portfolio))));
             ClientSocket.getInstance().getOut().flush();
 
             String responseMessage = ClientSocket.getInstance().getInStream().readLine();
@@ -408,25 +603,26 @@ public class MainLayout implements Initializable {
     }
 
     private void updatePortfolioUI(Portfolio portfolio) {
-        if (portfolio == null) {
+        cryptoListView.getSelectionModel().clearSelection();
+
+        if (portfolio == null || portfolio.getInvestments() == null || portfolio.getInvestments().isEmpty()) {
+            // Очищаем список и показываем сообщение
             cryptoListView.setItems(FXCollections.observableArrayList());
+            cryptoListView.setPlaceholder(new Label("Портфель пуст"));
             cryptoPortfolioComboBox.setItems(cryptoNames != null ? cryptoNames : FXCollections.observableArrayList());
             addCryptoButton.setDisable(true);
-            portfolioChart.getData().clear(); // Очистка графика
-            optimizationLabel.setText("Анализ не выполнен"); // Базовая инициализация
-            return;
-        }
-
-        Set<Investment> investments = portfolio.getInvestments();
-        if (investments != null && !investments.isEmpty()) {
-            List<Crypto> cryptos = investments.stream()
+            portfolioChart.getData().clear();
+            optimizationLabel.setText("Анализ не выполнен");
+        } else {
+            List<Crypto> cryptos = portfolio.getInvestments().stream()
                     .map(Investment::getCrypto)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             cryptoListView.setItems(FXCollections.observableArrayList(cryptos));
+            cryptoListView.setPlaceholder(null); // Убираем сообщение, если есть данные
 
-            // Обновляем cryptoPortfolioComboBox, исключая криптовалюты, уже присутствующие в портфеле
-            List<String> existingCryptoNames = investments.stream()
+            // Убираем уже добавленные криптовалюты из списка добавления
+            List<String> existingCryptoNames = portfolio.getInvestments().stream()
                     .map(inv -> inv.getCrypto().getName())
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
@@ -438,16 +634,9 @@ public class MainLayout implements Initializable {
                     ) : FXCollections.observableArrayList();
             cryptoPortfolioComboBox.setItems(availableCryptos);
 
-            // Управление кнопкой добавления
             boolean hasAvailableCryptos = !availableCryptos.isEmpty();
-            addCryptoButton.setDisable(!hasAvailableCryptos);
-
-        } else {
-            cryptoListView.setItems(FXCollections.observableArrayList());
-            cryptoPortfolioComboBox.setItems(cryptoNames != null ? cryptoNames : FXCollections.observableArrayList());
-            addCryptoButton.setDisable(true);
-            portfolioChart.getData().clear(); // Очистка графика
-            optimizationLabel.setText("Анализ не выполнен"); // Базовая инициализация
+            String selectedCrypto = cryptoPortfolioComboBox.getValue();
+            addCryptoButton.setDisable(!hasAvailableCryptos || selectedCrypto == null);
         }
     }
 
@@ -460,28 +649,34 @@ public class MainLayout implements Initializable {
                 return;
             }
 
-            // Создаём новый портфель
+            // Создаём новый портфель локально
             Portfolio newPortfolio = new Portfolio();
             newPortfolio.setPortfolioName(portfolioName);
             newPortfolio.setUser(loggedInUser);
             newPortfolio.setCreatedAt(LocalDateTime.now());
-            newPortfolio.setInvestments(new HashSet<>()); // Инициализируем список инвестиций
+            newPortfolio.setInvestments(new HashSet<>());
 
-            // Сохраняем портфель как текущий
             currentPortfolio = newPortfolio;
+            portfolioNames.add(portfolioName);
+
+            EventHandler<ActionEvent> handler = portfolioComboBox.getOnAction();
+            portfolioComboBox.setOnAction(null);
+
             portfolioComboBox.setItems(portfolioNames);
             portfolioComboBox.setValue(portfolioName);
+
+            portfolioComboBox.setOnAction(handler);
+
             unsavedPortfolioName = portfolioName;
             isPortfolioModified = true;
-            isCreatingNewPortfolio = true;
             savePortfolioButton.setDisable(false);
+            deletePortfolioButton.setDisable(false);
+            analyzePortfolioButton.setDisable(false);
+            addCryptoButton.setDisable(false);
 
-            // Очищаем UI и инициализируем аналитику
-            cryptoListView.setItems(FXCollections.observableArrayList());
-            portfolioChart.getData().clear(); // Очищаем график
-            optimizationLabel.setText("Анализ не выполнен"); // Начальное состояние аналитики
-            cryptoPortfolioComboBox.setItems(cryptoNames); // Показываем все криптовалюты для добавления
-        } else if (portfolioName != null) {
+            updatePortfolioUI(currentPortfolio);
+            AlertUtil.showInfo("Напоминание", "Новый портфель создан. Не забудьте сохранить изменения.", "");
+        } else {
             AlertUtil.showError("Ошибка", "Название портфеля не может быть пустым", "");
         }
     }
@@ -520,7 +715,41 @@ public class MainLayout implements Initializable {
 
     @FXML
     public void createReport(){
+        try {
+            ReportGenerator reportGenerator = new ReportGenerator();
+            // Получаем имя портфеля из выпадающего списка
+            String portfolioName = portfolioComboBox.getValue();
+            if (portfolioName == null || portfolioName.trim().isEmpty()) {
+                AlertUtil.showError("Ошибка", "Портфель не выбран.", "");
+                return;
+            }
 
+            // Формируем запрос к серверу
+            Portfolio requestPortfolio = new Portfolio();
+            requestPortfolio.setPortfolioName(portfolioName);
+            requestPortfolio.setUser(loggedInUser);
+
+            Request request = new Request(RequestType.GET_PORTFOLIO_DATA, gson.toJson(requestPortfolio));
+            ClientSocket.getInstance().getOut().println(gson.toJson(request));
+            ClientSocket.getInstance().getOut().flush();
+
+            // Получаем ответ от сервера
+            String responseMessage = ClientSocket.getInstance().getInStream().readLine();
+            Response response = gson.fromJson(responseMessage, Response.class);
+
+            if (response.getResponseStatus() == ResponseStatus.OK) {
+                Portfolio portfolio = gson.fromJson(response.getResponseData(), Portfolio.class);
+                // Используем ReportGenerator для создания отчета
+                reportGenerator.generateReport(portfolio);
+                AlertUtil.showInfo("Успех", "Отчет успешно создан.", "");
+            } else {
+                AlertUtil.showError("Ошибка", "Не удалось получить данные портфеля.", response.getResponseMessage());
+            }
+        } catch (IOException e) {
+            AlertUtil.showError("Ошибка", "Ошибка соединения с сервером.", e.getMessage());
+        } catch (Exception e) {
+            AlertUtil.showError("Ошибка", "Не удалось создать отчет.", e.getMessage());
+        }
     }
 
     @FXML
@@ -533,7 +762,8 @@ public class MainLayout implements Initializable {
 
     @FXML void selectCryptoInPotrfolio(){
         String selectedCrypto = cryptoPortfolioComboBox.getValue();
-        addCryptoButton.setDisable(selectedCrypto == null);
+        boolean hasAvailableCryptos = cryptoPortfolioComboBox.getItems().size() > 0;
+        addCryptoButton.setDisable(!hasAvailableCryptos || selectedCrypto == null);
     }
 
     private void loadCryptoList() {
@@ -786,7 +1016,7 @@ public class MainLayout implements Initializable {
     @FXML
     private void switchToAdmin() {
         showPane(adminPane);
-        headerLabel.setText("Техническое управление");
+        headerLabel.setText("Администрирование");
         loadAdminData();
     }
 
@@ -947,6 +1177,12 @@ public class MainLayout implements Initializable {
             return;
         }
 
+        // Проверка на удаление собственного аккаунта
+        if (selectedUser.getUserId() == loggedInUser.getUserId()) {
+            AlertUtil.showWarning("Предупреждение", "Вы не можете удалить свой собственный аккаунт", "");
+            return;
+        }
+
         boolean confirm = AlertUtil.showConfirmation("Удаление пользователя",
                 "Вы уверены, что хотите удалить пользователя '" + selectedUser.getUsername() + "'?", "");
         if (!confirm) return;
@@ -1016,15 +1252,42 @@ public class MainLayout implements Initializable {
             return;
         }
 
-        String newEmail = AlertUtil.showInputDialog("Редактирование пользователя", "Введите новый email:", selectedUser.getEmail());
-        if (newEmail == null || newEmail.isEmpty()) return;
+        // Сохраняем старые значения для отката в случае ошибки
+        String oldUsername = selectedUser.getUsername();
+        String oldEmail = selectedUser.getEmail();
+        Role oldRole = selectedUser.getRole();
 
-        if (!newEmail.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+        // Запрашиваем новые значения через диалоговые окна
+        String newUsername = AlertUtil.showInputDialog("Редактирование пользователя",
+                "Введите новое имя пользователя (оставьте пустым, чтобы не менять):", selectedUser.getUsername());
+        String newEmail = AlertUtil.showInputDialog("Редактирование пользователя",
+                "Введите новый email (оставьте пустым, чтобы не менять):", selectedUser.getEmail());
+
+        // Для роли можем предложить выбор: "Пользователь" или "Администратор"
+        String[] roleOptions = {"Пользователь", "Администратор"};
+        String newRoleName = AlertUtil.showChoiceDialog("Редактирование пользователя",
+                "Выберите новую роль (оставьте без изменений, выбрав текущую роль):",
+                roleOptions, selectedUser.getRole().getRoleName());
+
+        // Проверяем введённые данные
+        if (newEmail != null && !newEmail.trim().isEmpty() && !newEmail.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             AlertUtil.showError("Ошибка", "Некорректный формат email", "");
             return;
         }
 
-        selectedUser.setEmail(newEmail);
+        // Обновляем только те поля, которые не пустые
+        if (newUsername != null && !newUsername.trim().isEmpty()) {
+            selectedUser.setUsername(newUsername);
+        }
+        if (newEmail != null && !newEmail.trim().isEmpty()) {
+            selectedUser.setEmail(newEmail);
+        }
+        if (newRoleName != null && !newRoleName.equals(selectedUser.getRole().getRoleName())) {
+            Role updatedRole = new Role();
+            updatedRole.setRoleName(newRoleName);
+            selectedUser.setRole(updatedRole);
+        }
+
         try {
             ClientSocket.getInstance().getOut().println(gson.toJson(new Request(RequestType.UPDATE_USER, gson.toJson(selectedUser))));
             ClientSocket.getInstance().getOut().flush();
@@ -1036,9 +1299,17 @@ public class MainLayout implements Initializable {
                 AlertUtil.showInfo("Успех", "Данные пользователя обновлены", "");
                 loadAllUsers(); // Обновляем таблицу
             } else {
+                // Откатываем изменения при ошибке
+                selectedUser.setUsername(oldUsername);
+                selectedUser.setEmail(oldEmail);
+                selectedUser.setRole(oldRole);
                 AlertUtil.showError("Ошибка", "Не удалось обновить данные", response.getResponseMessage());
             }
         } catch (IOException e) {
+            // Откатываем изменения при ошибке
+            selectedUser.setUsername(oldUsername);
+            selectedUser.setEmail(oldEmail);
+            selectedUser.setRole(oldRole);
             AlertUtil.showError("Ошибка", "Не удалось обновить данные", e.getMessage());
         }
     }

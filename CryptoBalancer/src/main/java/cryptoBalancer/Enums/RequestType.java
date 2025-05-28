@@ -15,5 +15,6 @@ public enum RequestType {
     GET_CRYPTO_NEWS,
     DELETE_USER,
     UPDATE_USER_ROLE,
-    UPDATE_USER
+    UPDATE_USER,
+    ANALYZE_PORTFOLIO
 }

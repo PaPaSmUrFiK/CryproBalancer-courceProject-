@@ -8,7 +8,7 @@ import cryptoBalancer.Models.Entities.CryptoHistory;
 import java.util.List;
 
 public class CryptoHistoryService implements Service<CryptoHistory> {
-    DAO<CryptoHistory> daoService = new CryptoHistoryDAO();
+    private final DAO<CryptoHistory> daoService = new CryptoHistoryDAO();
 
     @Override
     public CryptoHistory findEntity(int id) {
@@ -30,8 +30,19 @@ public class CryptoHistoryService implements Service<CryptoHistory> {
         daoService.update(entity);
     }
 
+    @Override
     public List<CryptoHistory> findAllEntities() {
         return daoService.findAll();
     }
 
+    public List<CryptoHistory> getLastNRecords(int cryptoId, int n) {
+        if (n <= 0) {
+            throw new IllegalArgumentException("Количество записей должно быть положительным");
+        }
+        List<CryptoHistory> records = ((CryptoHistoryDAO)daoService).getLastNRecords(cryptoId, n);
+        if (records.isEmpty()) {
+            throw new IllegalStateException("Нет записей для cryptoId: " + cryptoId);
+        }
+        return records;
+    }
 }

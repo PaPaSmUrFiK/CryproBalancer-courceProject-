@@ -35,6 +35,6 @@ public class InversmentService implements Service<Investment> {
     }
 
     public void deleteInvestmentsByPortfolioId(int portfolioId){
-        ((InversmentService)daoService).deleteInvestmentsByPortfolioId(portfolioId);
+        ((InvestmentDAO)daoService).deleteInvestmentsByPortfolioId(portfolioId);
     }
 }

@@ -32,7 +32,7 @@ public class Portfolio{
     @Expose
     private User user;
 
-    @OneToMany(mappedBy = "portfolio", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "portfolio", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @Expose
     private Set<Investment> investments = new LinkedHashSet<>();
 
@@ -94,5 +94,14 @@ public class Portfolio{
 
     public void setPortfolioName(String portfolioName) {
         this.portfolioName = portfolioName;
+    }
+
+    @Override
+    public String toString() {
+        return "Portfolio{" +
+                "portfolioId=" + portfolioId +
+                ", portfolioName='" + portfolioName + '\'' +
+                ", investments=" + investments +
+                '}';
     }
 }

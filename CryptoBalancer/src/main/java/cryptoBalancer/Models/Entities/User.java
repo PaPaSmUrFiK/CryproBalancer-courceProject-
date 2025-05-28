@@ -1,20 +1,22 @@
 package cryptoBalancer.Models.Entities;
 
+import com.google.gson.annotations.Expose;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class User extends Portfolio {
-
+    @Expose
     private int userId;
-
+    @Expose
     private Role role;
-
+    @Expose
     private String username;
-
+    @Expose
     private String email;
-
+    @Expose
     private String PasswordHash;
 
     private List<Portfolio> portfolios = new ArrayList<>();

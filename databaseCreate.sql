@@ -55,7 +55,7 @@ CREATE TABLE crypto_balancer.investment (
     purchase_price NUMERIC(20, 8) NOT NULL,
     amount NUMERIC(20, 8) NOT NULL,
     FOREIGN KEY (portfolio_id) REFERENCES crypto_balancer.portfolio(portfolio_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (crypto_id) REFERENCES crypto_balancer.crypto(crypto_id) ON DELETE RESTRICT ON UPDATE CASCADE
+    FOREIGN KEY (crypto_id) REFERENCES crypto_balancer.crypto(crypto_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- Индексы для оптимизации запросов

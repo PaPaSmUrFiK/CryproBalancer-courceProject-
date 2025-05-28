@@ -1,16 +1,19 @@
 package cryptoBalancer.Models.Entities;
 
+import com.google.gson.annotations.Expose;
+
 import java.math.BigDecimal;
 
 public class Investment extends Crypto {
+    @Expose
     private int investmentId;
 
     private Portfolio portfolio;
-
+    @Expose
     private Crypto crypto;
-
+    @Expose
     private BigDecimal amount;
-
+    @Expose
     private BigDecimal purchasePrice;
 
     public Investment() {

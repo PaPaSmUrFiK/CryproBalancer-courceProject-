@@ -1,21 +1,24 @@
 package cryptoBalancer.Models.Entities;
 
+import com.google.gson.annotations.Expose;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class Crypto {
+    @Expose
     private int cryptoId;
-
+    @Expose
     private String name;
-
+    @Expose
     private String symbol;
-
+    @Expose
     private String coinGeckoId;
 
     private Set<Investment> investments = new HashSet<>();
-
+    @Expose
     private List<CryptoHistory> history = new ArrayList<>();
 
     public Crypto() {

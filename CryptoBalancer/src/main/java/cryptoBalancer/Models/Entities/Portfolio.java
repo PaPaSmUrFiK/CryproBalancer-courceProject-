@@ -1,21 +1,24 @@
 package cryptoBalancer.Models.Entities;
 
+import com.google.gson.annotations.Expose;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class Portfolio {
+    @Expose
     private int portfolioId;
-
+    @Expose
     private String portfolioName;
-
+    @Expose
     private LocalDateTime createdAt;
-
+    @Expose
     private Analytic analytic;
-
+    @Expose
     private User user;
-
+    @Expose
     private Set<Investment> investments = new LinkedHashSet<>();
 
     public Portfolio() {

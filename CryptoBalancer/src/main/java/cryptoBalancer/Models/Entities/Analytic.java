@@ -1,14 +1,17 @@
 package cryptoBalancer.Models.Entities;
 
+import com.google.gson.annotations.Expose;
+
 import java.math.BigDecimal;
 
 public class Analytic {
+    @Expose
     private int portfolioId;
 
     private Portfolio portfolio;
-
+    @Expose
     private BigDecimal expectedReturn;
-
+    @Expose
     private BigDecimal risk;
 
     public Analytic() {

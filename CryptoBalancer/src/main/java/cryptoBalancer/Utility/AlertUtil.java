@@ -133,6 +133,8 @@ public class AlertUtil {
         return dialog.showAndWait().orElse(null);
     }
 
+
+
     public static void showValidationErrors(ValidationResult result) {
         if (!result.isValid()) {
             StringBuilder errorMessage = new StringBuilder("Обнаружены ошибки:\n");
@@ -141,6 +143,14 @@ public class AlertUtil {
             }
             showError("Ошибка валидации", "Исправьте ошибки", errorMessage.toString());
         }
+    }
+
+    public static String showChoiceDialog(String title, String header, String[] options, String defaultOption) {
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(defaultOption, options);
+        dialog.setTitle(title);
+        dialog.setHeaderText(header);
+        dialog.setContentText("Выберите опцию:");
+        return dialog.showAndWait().orElse(null);
     }
 
     private static void showAlert(AlertType type, String title, String header, String content) {

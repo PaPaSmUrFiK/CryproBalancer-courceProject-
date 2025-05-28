@@ -1,5 +1,6 @@
 package cryptoBalancer.Utility;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -246,7 +247,23 @@ public class ClientThread implements Runnable {
                         portfolioToSave.setPortfolioName(portfolio.getPortfolioName());
                         portfolioToSave.setUser(user);
                         portfolioToSave.setCreatedAt(LocalDateTime.now());
-                        portfolioService.saveEntity(portfolioToSave);
+
+                        // Создаем аналитику
+                        Analytic analytic = new Analytic();
+                        analytic.setExpectedReturn(BigDecimal.ZERO);
+                        analytic.setRisk(BigDecimal.ZERO);
+                        
+                        // Устанавливаем двустороннюю связь
+                        analytic.setPortfolio(portfolioToSave);
+                        portfolioToSave.setAnalytic(analytic);
+                        
+                        // Сохраняем портфель с аналитикой одной транзакцией
+                        try {
+                            portfolioService.saveEntity(portfolioToSave);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            throw new IllegalStateException("Ошибка при сохранении портфеля: " + e.getMessage());
+                        }
                     }
 
                     if (existingPortfolio != null) {
@@ -273,10 +290,10 @@ public class ClientThread implements Runnable {
                     Portfolio fullPortfolio = portfolioService.findEntity(portfolioToSave.getPortfolioId());
                     return fullPortfolio != null
                             ? new Response(ResponseStatus.OK, "Портфель успешно сохранён", gson.toJson(fullPortfolio))
-                            : new Response(ResponseStatus.ERROR, "Не удалось загрузить сохранённый портфель", null);
+                            : new Response(ResponseStatus.ERROR, "Не удалось загрузить сохранённый портфель", "");
                 } catch (Exception e) {
                     e.printStackTrace();
-                    return new Response(ResponseStatus.ERROR, "Не удалось сохранить портфель: " + e.getMessage(), null);
+                    return new Response(ResponseStatus.ERROR, "Не удалось сохранить портфель: " + e.getMessage(), "");
                 }
             }
 
@@ -338,6 +355,216 @@ public class ClientThread implements Runnable {
                 } catch (Exception e) {
                     e.printStackTrace();
                     return new Response(ResponseStatus.ERROR, "Ошибка загрузки новостей: " + e.getMessage(), "");
+                }
+            }
+            case DELETE_USER: {
+                try {
+                    Integer userId = gson.fromJson(request.getRequestMessage(), Integer.class);
+                    if (userId == null) {
+                        return new Response(ResponseStatus.ERROR, "Идентификатор пользователя не указан", "");
+                    }
+
+                    User user = userService.findEntity(userId);
+                    if (user == null) {
+                        return new Response(ResponseStatus.ERROR, "Пользователь с ID " + userId + " не найден", "");
+                    }
+
+                    userService.deleteEntity(user);
+                    // Проверяем, что пользователь действительно удалён
+                    User deletedUser = userService.findEntity(userId);
+                    if (deletedUser == null) {
+                        return new Response(ResponseStatus.OK, "Пользователь успешно удалён", "");
+                    } else {
+                        return new Response(ResponseStatus.ERROR, "Не удалось удалить пользователя", "");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return new Response(ResponseStatus.ERROR, "Ошибка при удалении пользователя: " + e.getMessage(), "");
+                }
+            }
+            case UPDATE_USER: {
+                try {
+                    User updatedUser = gson.fromJson(request.getRequestMessage(), User.class);
+                    if (updatedUser == null || updatedUser.getUserId() == 0) {
+                        return new Response(ResponseStatus.ERROR, "Некорректные данные пользователя", "");
+                    }
+
+                    User existingUser = userService.findEntity(updatedUser.getUserId());
+                    if (existingUser == null) {
+                        return new Response(ResponseStatus.ERROR, "Пользователь с ID " + updatedUser.getUserId() + " не найден", "");
+                    }
+
+                    // Обновляем поля пользователя
+                    if (updatedUser.getUsername() != null && !updatedUser.getUsername().trim().isEmpty()) {
+                        existingUser.setUsername(updatedUser.getUsername());
+                    }
+                    if (updatedUser.getEmail() != null && !updatedUser.getEmail().trim().isEmpty()) {
+                        existingUser.setEmail(updatedUser.getEmail());
+                    }
+                    if (updatedUser.getRole() != null && updatedUser.getRole().getRoleName() != null) {
+                        // Находим роль по имени
+                        Role role = roleService.findByName(updatedUser.getRole().getRoleName());
+                        if (role == null) {
+                            return new Response(ResponseStatus.ERROR, "Роль '" + updatedUser.getRole().getRoleName() + "' не найдена", "");
+                        }
+                        existingUser.setRole(role);
+                    }
+
+                    userService.updateEntity(existingUser);
+                    return new Response(ResponseStatus.OK, "Данные пользователя успешно обновлены", "");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return new Response(ResponseStatus.ERROR, "Ошибка при обновлении данных пользователя: " + e.getMessage(), "");
+                }
+            }
+            case UPDATE_USER_ROLE: {
+                try {
+                    User updatedUser = gson.fromJson(request.getRequestMessage(), User.class);
+                    if (updatedUser == null || updatedUser.getUserId() == 0 || updatedUser.getRole() == null) {
+                        return new Response(ResponseStatus.ERROR, "Некорректные данные пользователя или роли", "");
+                    }
+
+                    User existingUser = userService.findEntity(updatedUser.getUserId());
+                    if (existingUser == null) {
+                        return new Response(ResponseStatus.ERROR, "Пользователь с ID " + updatedUser.getUserId() + " не найден", "");
+                    }
+
+                    String roleName = updatedUser.getRole().getRoleName();
+                    Role role = roleService.findByName(roleName);
+                    if (role == null) {
+                        return new Response(ResponseStatus.ERROR, "Роль '" + roleName + "' не найдена", "");
+                    }
+
+                    existingUser.setRole(role);
+                    userService.updateEntity(existingUser);
+                    return new Response(ResponseStatus.OK, "Роль пользователя успешно обновлена", "");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return new Response(ResponseStatus.ERROR, "Ошибка при обновлении роли пользователя: " + e.getMessage(), "");
+                }
+            }
+            case GET_PORTFOLIO_DATA: {
+                try {
+                    Portfolio requestData = gson.fromJson(request.getRequestMessage(), Portfolio.class);
+                    String portfolioName = requestData.getPortfolioName();
+                    User user = requestData.getUser();
+
+
+                    if (portfolioName == null || portfolioName.trim().isEmpty()) {
+                        return new Response(ResponseStatus.ERROR, "Название портфеля не указано", "");
+                    }
+
+                    user = userService.findEntity(user.getUserId());
+
+                    if (user == null) {
+                        return new Response(ResponseStatus.ERROR, "Пользователь не найден", "");
+                    }
+
+                    Portfolio portfolio = user.getPortfolios().stream()
+                            .filter(p -> p.getPortfolioName().equals(portfolioName))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (portfolio == null) {
+                        return new Response(ResponseStatus.ERROR, "Портфель не найден: " + portfolioName, "");
+                    }
+
+                    String portfolioJson = gson.toJson(portfolio);
+                    System.out.println("-------------");
+                    System.out.println(portfolioJson);
+                    return new Response(ResponseStatus.OK, "Данные портфеля успешно загружены", portfolioJson);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return new Response(ResponseStatus.ERROR, "Ошибка при загрузке данных портфеля: " + e.getMessage(), "");
+                }
+            }
+            case DELETE_PORTFOLIO: {
+                try {
+                    Portfolio deletedPOrtfolio = gson.fromJson(request.getRequestMessage(), Portfolio.class);
+                    String portfolioName = deletedPOrtfolio.getPortfolioName();
+
+                    if (portfolioName == null || portfolioName.trim().isEmpty()) {
+                        return new Response(ResponseStatus.ERROR, "Название портфеля не указано", "");
+                    }
+
+                    User user = deletedPOrtfolio.getUser();
+                    user = userService.findEntity(user.getUserId());
+                    if (user == null) {
+                        return new Response(ResponseStatus.ERROR, "Пользователь не найден", "");
+                    }
+
+                    Portfolio portfolio = user.getPortfolios().stream()
+                            .filter(p -> p.getPortfolioName().equals(portfolioName))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (portfolio == null) {
+                        return new Response(ResponseStatus.ERROR, "Портфель не найден: " + portfolioName, "");
+                    }
+
+                    portfolioService.deleteEntity(portfolio);
+
+                    return new Response(ResponseStatus.OK, "Портфель успешно удалён", "");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return new Response(ResponseStatus.ERROR, "Ошибка при удалении портфеля: " + e.getMessage(), "");
+                }
+            }
+            case ANALYZE_PORTFOLIO: {
+                try {
+                    // Десериализация портфеля из запроса
+                    Portfolio deletedPortfolio = gson.fromJson(request.getRequestMessage(), Portfolio.class);
+                    String portfolioName = deletedPortfolio.getPortfolioName();
+
+                    // Проверка имени портфеля
+                    if (portfolioName == null || portfolioName.trim().isEmpty()) {
+                        return new Response(ResponseStatus.ERROR, "Название портфеля не указано", "");
+                    }
+
+                    // Поиск пользователя
+                    User user = deletedPortfolio.getUser();
+                    user = userService.findEntity(user.getUserId());
+                    if (user == null) {
+                        return new Response(ResponseStatus.ERROR, "Пользователь не найден", "");
+                    }
+
+                    // Поиск портфеля по имени
+                    Portfolio portfolio = user.getPortfolios().stream()
+                            .filter(p -> p.getPortfolioName().equals(portfolioName))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (portfolio == null) {
+                        return new Response(ResponseStatus.ERROR, "Портфель не найден: " + portfolioName, "");
+                    }
+
+                    // Получение инвестиций и общего капитала
+                    Set<Investment> investments = portfolio.getInvestments();
+                    if (investments.isEmpty()) {
+                        return new Response(ResponseStatus.ERROR, "Портфель не содержит инвестиций", "");
+                    }
+
+                    // Оптимизация портфеля
+                    MarkowitzOptimizer markowitzOptimizer = new MarkowitzOptimizer(cryptoHistoryService);
+                    if (portfolio.getAnalytic().getExpectedReturn().compareTo(BigDecimal.ZERO) != 0) {
+                        double minReturn = portfolio.getAnalytic().getExpectedReturn().doubleValue(); // Предполагаем, что risk здесь означает целевую доходность
+                        markowitzOptimizer.minimizeRiskForReturn(investments, minReturn);
+                    } else {
+                        // Максимизация доходности при заданном уровне риска
+                        double maxVariance = portfolio.getAnalytic().getRisk().doubleValue();
+                        markowitzOptimizer.maximizeReturnForRisk(investments, maxVariance);
+                    }
+
+                    // Сохранение обновленного портфеля в базе данных
+                    portfolioService.updateEntity(portfolio); // Предполагаем, что есть portfolioService
+                    System.out.println(portfolio.getInvestments());
+                    // Формирование ответа
+                    return new Response(ResponseStatus.OK, "Портфель оптимизирован", gson.toJson(portfolio));
+                } catch (IllegalStateException e) {
+                    // Ошибка оптимизации (например, недостаточно данных или решение не найдено)
+                    return new Response(ResponseStatus.ERROR, "Ошибка оптимизации: " + e.getMessage(), "");
+                } catch (Exception e) {
+                    return new Response(ResponseStatus.ERROR, "Ошибка сервера: " + e.getMessage(), "");
                 }
             }
             default:

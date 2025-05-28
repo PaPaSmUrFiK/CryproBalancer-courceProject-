@@ -1,16 +1,19 @@
 package cryptoBalancer.Models.Entities;
 
+import com.google.gson.annotations.Expose;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class CryptoHistory {
+    @Expose
     private int historyId;
 
     private Crypto crypto;
-
+    @Expose
     private LocalDate dateChanged;
-
+    @Expose
     private BigDecimal price;
 
     public CryptoHistory() {

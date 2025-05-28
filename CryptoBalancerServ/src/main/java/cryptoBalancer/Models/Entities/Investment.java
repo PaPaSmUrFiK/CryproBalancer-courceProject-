@@ -82,4 +82,15 @@ public class Investment {
     public void setCrypto(Crypto crypto) {
         this.crypto = crypto;
     }
+
+    @Override
+    public String toString() {
+        return "Investment{" +
+                "investmentId=" + investmentId +
+                ", amount=" + amount +
+                ", crypto=" + crypto.getName() +
+                ", purchasePrice=" + purchasePrice +
+                '}';
+    }
+
 }

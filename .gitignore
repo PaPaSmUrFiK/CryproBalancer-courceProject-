@@ -2,6 +2,6 @@
 *
 
 # Кроме нужных файлов и папок
-!CryproBalancer/
+!CryproBalancer
 !CryptoBalancerServ
 !.gitignore
